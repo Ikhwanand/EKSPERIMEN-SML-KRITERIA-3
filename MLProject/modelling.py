@@ -29,7 +29,7 @@ test_df_preprocessing.to_csv('./preprocessing_dataset/test_preprocessing.csv', i
 # Set experiment name
 experiment_name = "Logistic Regression Optimized"
 mlflow.set_experiment(experiment_name)
-mlflow.set_tracking_uri('http://127.0.0.1:5000/')
+
 
 print(f"MLflow experiment '{experiment_name}' is ready!")
 print(f"MLflow tracking URI: {mlflow.get_tracking_uri()}")
