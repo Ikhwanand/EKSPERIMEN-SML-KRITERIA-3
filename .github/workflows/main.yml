@@ -37,6 +37,18 @@ jobs:
           conda list
           pip install mlflow scikit-learn pandas numpy matplotlib seaborn
 
+      
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          if [ ! -f requirements.txt ] && [ ! -f pyproject.toml ]; then
+            echo "No requirements.txt or pyproject.toml found"
+            exit 1
+          fi
+          pip install -r requirements.txt || pip install -e .
+
       - name: Train model and log to MLflow
         shell: bash -l {0}
         run: |
