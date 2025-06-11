@@ -30,11 +30,6 @@ jobs:
           environment-file: MLProject/conda.yaml
           auto-activate-base: false
 
-
-      
-      - name: Check out code
-        uses: actions/checkout@v3
-
       - name: Install dependencies
         run: |
           if [ ! -f requirements.txt ] && [ ! -f pyproject.toml ]; then
@@ -43,14 +38,12 @@ jobs:
           fi
           pip install -r requirements.txt || pip install -e .
 
-
       - name: Train model and log to MLflow
         shell: bash -l {0}
         run: |
           cd MLProject
           export MLFLOW_TRACKING_URI="file:./mlruns"
           python modelling.py
-
 
       - name: Upload MLflow artifacts
         uses: actions/upload-artifact@v4
@@ -61,8 +54,6 @@ jobs:
             MLProject/MLmodel
             MLProject/conda.yaml
             MLProject/images/*.png
-
-
 
       - name: Debug - List MLflow runs
         run: |
@@ -80,20 +71,16 @@ jobs:
           echo "Using Run ID: ${{ env.RUN_ID }}"
           mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "churn_prediction"
 
-      
-
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      
       - name: Tag Docker Image
         run: |
           docker tag churn_prediction ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
 
-      
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
