@@ -1,54 +1,46 @@
-name: ML Model CI/CD Pipeline
+name: CI/CD MLflow
 
 on:
   push:
-    branches: [ main, master ]
-    paths:
-      - 'MLProject/**'
+    branches:
+      - main
   pull_request:
-    branches: [ main, master ]
-    paths:
-      - 'MLProject/**'
-  workflow_dispatch:
+    branches:
+      - main
+
+env:
+  CSV_URL: "data/customer_churn_dataset-training-master.csv"
+  TARGET_VAR: "Churn_Prediction"
 
 jobs:
-  train-model:
+  build:
     runs-on: ubuntu-latest
+
     steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE
       - uses: actions/checkout@v3
 
-      - name: Set up Python
+      # Setup Python 3.12.7
+      - name: Set up Python 3.12.7
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12.3'
-          cache: 'pip'
-
-      - name: Setup Conda
-        uses: conda-incubator/setup-miniconda@v2
-        with:
-          activate-environment: mlflow-env
-          environment-file: MLProject/conda.yaml
-          auto-activate-base: false
-
-
+          python-version: "3.12.7"
       
-      - name: Check out code
-        uses: actions/checkout@v3
-
+      # Check Env Variables
+      - name: Check Env
+        run: |
+          echo $CSV_URL
+      # Install mlflow
       - name: Install dependencies
         run: |
-          if [ ! -f requirements.txt ] && [ ! -f pyproject.toml ]; then
-            echo "No requirements.txt or pyproject.toml found"
-            exit 1
-          fi
-          pip install -r requirements.txt || pip install -e .
-      - name: Train model and log to MLflow
-        shell: bash -l {0}
+          python -m pip install --upgrade pip
+          pip install mlflow  
+          
+      # Run as a mlflow project
+      - name: Run mlflow project
         run: |
-          cd MLProject
-          export MLFLOW_TRACKING_URI="file:./mlruns"
-          python modelling.py
-
+          mlflow run MLproject --env-manager=local 
+      
       # Get latest run_id
       - name: Get latest MLflow run_id
         run: |
@@ -77,13 +69,3 @@ jobs:
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
-          
-      - name: Upload MLflow artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: mlflow-artifacts
-          path: |
-            MLProject/mlruns
-            MLProject/MLmodel
-            MLProject/conda.yaml
-            MLProject/images/*.png
