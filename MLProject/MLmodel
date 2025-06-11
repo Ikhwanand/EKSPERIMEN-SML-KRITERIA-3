@@ -16,9 +16,9 @@ flavors:
 is_signature_from_type_hint: false
 mlflow_version: 2.22.0
 model_size_bytes: 806
-model_uuid: a1f3bb0b39b84f4fb130bdbda0caef54
+model_uuid: b29ccf0654044af7b75c54c8b3886a5b
 prompts: null
-run_id: e0963028f4e7487bb6e3867007030be1
+run_id: e9323af0998c4bda8392793f1638deb4
 signature:
   inputs: '[{"type": "double", "name": 0, "required": true}, {"type": "double", "name":
     1, "required": true}, {"type": "double", "name": 2, "required": true}, {"type":
@@ -33,4 +33,4 @@ signature:
   outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float64", "shape": [-1]}}]'
   params: null
 type_hint_from_example: false
-utc_time_created: '2025-06-05 15:46:20.976386'
+utc_time_created: '2025-06-10 16:37:31.374950'
