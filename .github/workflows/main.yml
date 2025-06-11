@@ -59,11 +59,6 @@ jobs:
             MLProject/MLmodel
             MLProject/conda.yaml
             MLProject/images/*.png
-
-
-      - name: Run mlflow project
-        run: |
-          mlflow run MLproject --env-manager=local
       
 
       - name: Get latest MLflow run_id
