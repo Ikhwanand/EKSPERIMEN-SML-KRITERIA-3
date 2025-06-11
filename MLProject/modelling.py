@@ -27,7 +27,7 @@ train_df_preprocessing.to_csv('./preprocessing_dataset/train_preprocessing.csv',
 test_df_preprocessing.to_csv('./preprocessing_dataset/test_preprocessing.csv', index=False)
 
 # Set experiment name
-experiment_name = "Logistic Regression Optimized"
+experiment_name = "Churn Prediction Logistic Regression"
 mlflow.set_experiment(experiment_name)
 
 
@@ -53,11 +53,8 @@ def train_and_log_model(model, model_name, X_train, y_train, X_test, y_test, par
     """
     Train model and log everything to MLflow
     """
-    with mlflow.start_run(run_name=model_name):
-        if params:
-            mlflow.log_params(params)
-        else:
-            mlflow.autolog()
+    with mlflow.start_run(run_name=model_name) as run:
+        mlflow.autolog()
             
         # Train model
         model.fit(X_train, y_train)
@@ -104,10 +101,11 @@ def train_and_log_model(model, model_name, X_train, y_train, X_test, y_test, par
             sk_model=model,
             artifact_path="model",
             signature=signature,
-            registered_model_name=model_name
+            registered_model_name="churn_prediction"
         )
         
         print(f"Model {model_name} logged to MLflow with signature.")
+        print(f"MLflow Run ID: {run.info.run_id}")
         
         print(f"\n{'='*50}")
         print(f"MODEL: {model_name}")
