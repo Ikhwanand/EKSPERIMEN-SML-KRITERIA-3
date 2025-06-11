@@ -27,7 +27,13 @@ train_df_preprocessing.to_csv('./preprocessing_dataset/train_preprocessing.csv',
 test_df_preprocessing.to_csv('./preprocessing_dataset/test_preprocessing.csv', index=False)
 
 # Set experiment name
-experiment_name = "Churn Prediction Logistic Regression"
+experiment_name = "Modelling with MLOps"
+try:
+    experiment_id = mlflow.create_experiment(experiment_name)
+except:
+    experiment_id = mlflow.get_experiment_by_name(experiment_name).experiment_id
+    
+# Set the experiment   
 mlflow.set_experiment(experiment_name)
 
 
