@@ -59,7 +59,7 @@ jobs:
       # Build Docker Model
       - name: Build Docker Model
         run: |
-          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "cc" 
+          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "churn_prediction" 
 
       # Login to Docker Hub
       - name: Log in to Docker Hub
@@ -71,12 +71,12 @@ jobs:
       # Tag the Docker image
       - name: Tag Docker Image
         run: |
-          docker tag cc ${{ secrets.DOCKER_HUB_USERNAME }}/cc:latest
+          docker tag churn_prediction ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
 
       # Push Docker image to Docker Hub
       - name: Push Docker Image
         run: |
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/cc:latest
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
           
       - name: Upload MLflow artifacts
         uses: actions/upload-artifact@v4
