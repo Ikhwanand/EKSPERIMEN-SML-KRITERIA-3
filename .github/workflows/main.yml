@@ -45,7 +45,7 @@ jobs:
           export MLFLOW_TRACKING_URI="file:./mlruns"
           python modelling.py
           # Store run ID immediately after training
-          RUN_ID=$(mlflow runs list --experiment-id 0 --view ALL -m 1 | tail -n 1 | cut -f 1)
+          RUN_ID=$(ls -t mlruns/0/*/meta.yaml | head -n 1 | cut -d'/' -f3)
           echo "Found Run ID: $RUN_ID"
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
 
