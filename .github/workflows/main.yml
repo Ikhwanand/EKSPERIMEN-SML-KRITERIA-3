@@ -30,11 +30,6 @@ jobs:
           environment-file: MLProject/conda.yaml
           auto-activate-base: false
 
-
-      
-      - name: Check out code
-        uses: actions/checkout@v3
-
       - name: Install dependencies
         run: |
           if [ ! -f requirements.txt ] && [ ! -f pyproject.toml ]; then
@@ -43,14 +38,12 @@ jobs:
           fi
           pip install -r requirements.txt || pip install -e .
 
-
       - name: Train model and log to MLflow
         shell: bash -l {0}
         run: |
           cd MLProject
           export MLFLOW_TRACKING_URI="file:./mlruns"
           python modelling.py
-
 
       - name: Upload MLflow artifacts
         uses: actions/upload-artifact@v4
@@ -62,52 +55,26 @@ jobs:
             MLProject/conda.yaml
             MLProject/images/*.png
 
-
-
-      - name: Debug - Inspect directory structure
+      - name: Debug - List MLflow runs
         run: |
-          echo "Current directory:"
-          pwd
-          echo "Contents of current directory:"
-          ls -R
-          echo "Contents of MLProject directory:"
-          ls -R MLProject
-
-      - name: Debug - Find MLflow runs
-        run: |
-          echo "Searching for mlruns directory:"
-          find . -name mlruns -type d
-          echo "Contents of found mlruns directories:"
-          find . -name mlruns -type d -exec ls -R {} \;
-
-
-      - name: Get latest MLflow run_id
-        run: |
-          MLRUNS_DIR=$(find . -name mlruns -type d | head -n 1)
-          if [ -z "$MLRUNS_DIR" ]; then
-            echo "No mlruns directory found"
-            exit 1
-          fi
-          echo "Using mlruns directory: $MLRUNS_DIR"
-          RUN_ID=$(ls -td $MLRUNS_DIR/0/*/ 2>/dev/null | head -n 1 | cut -d'/' -f5)
-          if [ -z "$RUN_ID" ]; then
-            echo "No run ID found"
-            exit 1
-          fi
+          cd MLProject
+          echo "Contents of mlruns directory:"
+          ls -R mlruns
+          echo "Latest run ID:"
+          RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
+          echo $RUN_ID
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-          echo "Latest run_id: $RUN_ID"
-          
 
       - name: Build Docker Model
+        shell: bash -l {0}
         run: |
-          if [ -z "$RUN_ID" ]; then
-            echo "No RUN_ID set, cannot build Docker model"
-            exit 1
-          fi
+          cd MLProject
           echo "Using Run ID: ${{ env.RUN_ID }}"
-          mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "churn_prediction"
-
-      
+          # Fixed model URI format
+          mlflow models build-docker \
+            --model-uri "runs:/${{ env.RUN_ID }}/model" \
+            --name "churn_prediction" \
+            --env-manager conda
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -115,12 +82,10 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      
       - name: Tag Docker Image
         run: |
           docker tag churn_prediction ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
 
-      
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
