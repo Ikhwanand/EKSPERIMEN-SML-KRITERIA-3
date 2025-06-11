@@ -43,6 +43,7 @@ jobs:
           fi
           pip install -r requirements.txt || pip install -e .
 
+
       - name: Train model and log to MLflow
         shell: bash -l {0}
         run: |
@@ -63,18 +64,21 @@ jobs:
 
 
 
-      - name: Get latest MLflow run_id
+      - name: Debug - List MLflow runs
         run: |
           cd MLProject
+          echo "Contents of mlruns directory:"
+          ls -R mlruns
+          echo "Latest run ID:"
           RUN_ID=$(ls -td mlruns/0/*/ | head -n 1 | cut -d'/' -f3)
+          echo $RUN_ID
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-          echo "Latest run_id: $RUN_ID"
 
-      
       - name: Build Docker Model
         run: |
           cd MLProject
-          mlflow models build-docker --model-uri "runs:/$RUN_ID/model" --name "churn_prediction"
+          echo "Using Run ID: ${{ env.RUN_ID }}"
+          mlflow models build-docker --model-uri "runs:/${{ env.RUN_ID }}/model" --name "churn_prediction"
 
       
 
