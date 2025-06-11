@@ -30,6 +30,11 @@ jobs:
           environment-file: MLProject/conda.yaml
           auto-activate-base: false
 
+
+      
+      - name: Check out code
+        uses: actions/checkout@v3
+
       - name: Install dependencies
         run: |
           if [ ! -f requirements.txt ] && [ ! -f pyproject.toml ]; then
@@ -37,29 +42,12 @@ jobs:
             exit 1
           fi
           pip install -r requirements.txt || pip install -e .
-
-      - name: Create mlruns directory
-        run: mkdir -p MLProject/mlruns
-
       - name: Train model and log to MLflow
         shell: bash -l {0}
         run: |
           cd MLProject
           export MLFLOW_TRACKING_URI="file:./mlruns"
           python modelling.py
-          if [ ! -d "mlruns/0" ]; then # Check for mlruns/0 relative to MLProject
-            echo "Error: mlruns/0 directory not found after training."
-            echo "Contents of current directory (should be MLProject):"
-            ls -R . 
-            echo "Contents of mlruns (relative to MLProject):"
-            ls -R mlruns || echo "mlruns does not exist or is empty."
-            exit 1
-          fi
-          # Store run ID immediately after training
-          RUN_ID=$(ls -t mlruns/0/*/meta.yaml | head -n 1 | cut -d'/' -f3)
-          echo "Found Run ID: $RUN_ID"
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-
       - name: Upload MLflow artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -69,47 +57,3 @@ jobs:
             MLProject/MLmodel
             MLProject/conda.yaml
             MLProject/images/*.png
-
-        # Get latest run_id
-      - name: Get latest MLflow run_id
-        shell: bash -l {0}
-        run: |
-          cd MLProject
-          if ! ls mlruns/0/*/meta.yaml 1>/dev/null 2>&1; then
-            echo "Error: No meta.yaml files found in mlruns/0 (relative to MLProject)."
-            echo "Contents of current directory (should be MLProject):"
-            ls -R .
-            echo "Contents of mlruns (relative to MLProject):"
-            ls -R mlruns || echo "mlruns directory does not exist or is empty."
-            exit 1
-          fi
-          RUN_ID=$(ls -t mlruns/0/*/meta.yaml | head -n 1 | cut -d'/' -f3)
-          echo "Found Run ID: $RUN_ID"
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-
-      - name: Build Docker Model
-        shell: bash -l {0}
-        run: |
-          cd MLProject
-          pip install mlflow
-          echo "Building Docker image for run ID: ${{ env.RUN_ID }}"
-          # List MLflow runs for debugging
-          echo "Available MLflow runs:"
-          mlflow runs list --experiment-id 0
-          
-          # Build Docker image
-          mlflow models build-docker \
-            --model-uri "runs:/${{ env.RUN_ID }}/model" \
-            --name "churn_prediction" \
-            --env-manager conda
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Tag and Push Docker Image
-        run: |
-          docker tag churn_prediction:latest ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
-          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/churn_prediction:latest
