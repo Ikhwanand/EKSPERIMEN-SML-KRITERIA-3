@@ -38,12 +38,23 @@ jobs:
           fi
           pip install -r requirements.txt || pip install -e .
 
+      - name: Create mlruns directory
+        run: mkdir -p MLProject/mlruns
+
       - name: Train model and log to MLflow
         shell: bash -l {0}
         run: |
           cd MLProject
           export MLFLOW_TRACKING_URI="file:./mlruns"
           python modelling.py
+          if [ ! -d "mlruns/0" ]; then # Check for mlruns/0 relative to MLProject
+            echo "Error: mlruns/0 directory not found after training."
+            echo "Contents of current directory (should be MLProject):"
+            ls -R . 
+            echo "Contents of mlruns (relative to MLProject):"
+            ls -R mlruns || echo "mlruns does not exist or is empty."
+            exit 1
+          fi
           # Store run ID immediately after training
           RUN_ID=$(ls -t mlruns/0/*/meta.yaml | head -n 1 | cut -d'/' -f3)
           echo "Found Run ID: $RUN_ID"
@@ -64,6 +75,14 @@ jobs:
         shell: bash -l {0}
         run: |
           cd MLProject
+          if ! ls mlruns/0/*/meta.yaml 1>/dev/null 2>&1; then
+            echo "Error: No meta.yaml files found in mlruns/0 (relative to MLProject)."
+            echo "Contents of current directory (should be MLProject):"
+            ls -R .
+            echo "Contents of mlruns (relative to MLProject):"
+            ls -R mlruns || echo "mlruns directory does not exist or is empty."
+            exit 1
+          fi
           RUN_ID=$(ls -t mlruns/0/*/meta.yaml | head -n 1 | cut -d'/' -f3)
           echo "Found Run ID: $RUN_ID"
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
