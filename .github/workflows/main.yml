@@ -37,12 +37,18 @@ jobs:
             exit 1
           fi
           pip install -r requirements.txt || pip install -e .
+
       - name: Train model and log to MLflow
         shell: bash -l {0}
         run: |
           cd MLProject
           export MLFLOW_TRACKING_URI="file:./mlruns"
           python modelling.py
+          # Store run ID immediately after training
+          RUN_ID=$(mlflow runs list --experiment-id 0 --view ALL -m 1 | tail -n 1 | cut -f 1)
+          echo "Found Run ID: $RUN_ID"
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+
       - name: Upload MLflow artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -52,7 +58,7 @@ jobs:
             MLProject/MLmodel
             MLProject/conda.yaml
             MLProject/images/*.png
-            
+
         # Get latest run_id
       - name: Get latest MLflow run_id
         shell: bash -l {0}
@@ -67,7 +73,12 @@ jobs:
         run: |
           cd MLProject
           pip install mlflow
-          echo "Building Docker image for run ID: $RUN_ID"
+          echo "Building Docker image for run ID: ${{ env.RUN_ID }}"
+          # List MLflow runs for debugging
+          echo "Available MLflow runs:"
+          mlflow runs list --experiment-id 0
+          
+          # Build Docker image
           mlflow models build-docker \
             --model-uri "runs:/${{ env.RUN_ID }}/model" \
             --name "churn_prediction" \
