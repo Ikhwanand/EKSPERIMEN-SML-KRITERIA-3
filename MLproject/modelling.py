@@ -16,6 +16,7 @@ if __name__=='__main__':
     # Read the csv file
     file_path = sys.argv[3] if len(sys.argv) > 3 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "preprocessing_dataset", "train_preprocessing.csv")
     data = pd.read_csv(file_path)
+    data.dropna(inplace=True)
     
     # The predicted column is "Churn"
     X_train, X_test, y_train, y_test = train_test_split(
