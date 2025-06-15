@@ -5,6 +5,6 @@ conda_env: conda.yaml
 entry_points:
   main:
     parameters:
-      csv_url: {type: str, default: "MLProject/preprocessing_dataset/train_preprocessing.csv"}
-      target_var: {type: str, default: "Churn"}
-    command: "python modelling.py --csv_url {csv_url} --target_var {target_var}"
+      csv_url: {type: str, default: "MLproject/preprocessing_dataset/train_preprocessing.csv"}
+      dataset : {type: string, default: "train_preprocessing.csv"}
+    command: "python modelling.py --csv_url {csv_url}"
