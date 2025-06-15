@@ -1,0 +1,1 @@
+link docker hub: https://hub.docker.com/repository/docker/ikhwananda/churn-prediction/general
